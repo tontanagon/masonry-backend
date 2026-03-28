@@ -37,7 +37,7 @@ func SetupRouter(db *gorm.DB) *gin.Engine {
 		// Gallery routes
 		galleries := api.Group("/galleries")
 		{
-			galleries.GET("", galleryController.GetAll)
+			galleries.POST("/search", galleryController.Search)
 			galleries.GET("/:id", galleryController.GetByID)
 			galleries.POST("", galleryController.Create)
 			galleries.PUT("/:id", galleryController.Update)

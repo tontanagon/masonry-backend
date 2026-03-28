@@ -21,16 +21,23 @@ func NewGalleryController(service *services.GalleryService) *GalleryController {
 	return &GalleryController{Service: service}
 }
 
-// GetAll handles GET /galleries
-func (c *GalleryController) GetAll(ctx *gin.Context) {
-	filtersStr := ctx.Query("filters")
-	pageStr := ctx.Query("page")
+// Search handles POST /galleries/search with body filters
+func (c *GalleryController) Search(ctx *gin.Context) {
+	var req struct {
+		Filters string `json:"filters"`
+		Page    int    `json:"page"`
+	}
+
+	if err := ctx.ShouldBindJSON(&req); err != nil {
+		// Fallback to defaults if body is missing or malformed
+		req.Filters = "all"
+		req.Page = 1
+	}
 
 	var tags []string
-	if filtersStr != "" && filtersStr != "all" {
-		rawTags := strings.Split(filtersStr, ",")
+	if req.Filters != "" && req.Filters != "all" {
+		rawTags := strings.Split(req.Filters, ",")
 		for _, tag := range rawTags {
-			// Strip # if it comes from the frontend URL literally
 			cleaned := strings.TrimSpace(strings.TrimPrefix(tag, "#"))
 			if cleaned != "" {
 				tags = append(tags, cleaned)
@@ -39,8 +46,8 @@ func (c *GalleryController) GetAll(ctx *gin.Context) {
 	}
 
 	page := 1
-	if p, err := strconv.Atoi(pageStr); err == nil && p > 0 {
-		page = p
+	if req.Page > 0 {
+		page = req.Page
 	}
 
 	limit := 8
