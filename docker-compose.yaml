@@ -1,0 +1,48 @@
+services:
+  masonry-backend:
+    container_name: masonry-backend
+    image: golang:1.25.6-alpine
+    working_dir: /app
+    command: go run .
+    volumes:
+      - ./public:/app
+    ports:
+      - ${PUBLIC_PORT}:8080
+    environment:
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+      MYSQL_DATABASE: ${MYSQL_DATABASE}
+      MYSQL_HOST: masonry-database-mysql
+      MYSQL_PORT: 3306
+    depends_on:
+      - masonry-database-mysql
+    restart: always
+    networks:
+      - masonry
+
+  masonry-database-mysql:
+    image: mysql:8.0.23
+    container_name: masonry-database-mysql
+    command: mysqld --default-authentication-plugin=mysql_native_password
+    restart: always
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 512m
+        reservations:
+          cpus: '0.5'
+          memory: 256m
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_PASSWORD:?error}
+      MYSQL_DATABASE: ${MYSQL_DATABASE:?error}
+    volumes:
+      - ./mysql:/var/lib/mysql
+    networks:
+      - masonry
+    ports:
+      - '${MYSQL_PUBLIC_PORT:?error}:3306'
+
+networks:
+  masonry:
+    external: true
