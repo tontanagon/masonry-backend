@@ -22,8 +22,8 @@ func NewGalleryService(galleryRepo *repositories.GalleryRepository, hashtagRepo 
 }
 
 // GetAll returns all galleries
-func (s *GalleryService) GetAll() ([]models.Gallery, error) {
-	return s.GalleryRepo.FindAll()
+func (s *GalleryService) GetAll(tags []string, page int, limit int) ([]models.Gallery, error) {
+	return s.GalleryRepo.FindAll(tags, page, limit)
 }
 
 // GetByID returns a gallery by ID

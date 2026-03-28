@@ -4,6 +4,8 @@ import (
 	"net/http"
 	"strconv"
 
+	"strings"
+
 	"github.com/gin-gonic/gin"
 	"github.com/krittawatcode/go-soldier-mvc/models"
 	"github.com/krittawatcode/go-soldier-mvc/services"
@@ -21,7 +23,29 @@ func NewGalleryController(service *services.GalleryService) *GalleryController {
 
 // GetAll handles GET /galleries
 func (c *GalleryController) GetAll(ctx *gin.Context) {
-	galleries, err := c.Service.GetAll()
+	filtersStr := ctx.Query("filters")
+	pageStr := ctx.Query("page")
+
+	var tags []string
+	if filtersStr != "" && filtersStr != "all" {
+		rawTags := strings.Split(filtersStr, ",")
+		for _, tag := range rawTags {
+			// Strip # if it comes from the frontend URL literally
+			cleaned := strings.TrimSpace(strings.TrimPrefix(tag, "#"))
+			if cleaned != "" {
+				tags = append(tags, cleaned)
+			}
+		}
+	}
+
+	page := 1
+	if p, err := strconv.Atoi(pageStr); err == nil && p > 0 {
+		page = p
+	}
+
+	limit := 8
+
+	galleries, err := c.Service.GetAll(tags, page, limit)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return

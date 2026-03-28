@@ -14,6 +14,7 @@ import (
 // SetupRouter initializes the Gin router with all routes
 func SetupRouter(db *gorm.DB) *gin.Engine {
 	r := gin.Default()
+	r.SetTrustedProxies(nil)
 
 	// Health check
 	r.GET("/health", func(c *gin.Context) {

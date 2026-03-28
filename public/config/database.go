@@ -42,6 +42,67 @@ func Migrate(db *gorm.DB) {
 	}
 
 	log.Println("Database migrated successfully")
+	
+	// Automatically execute Seeding after Migration
+	SeedData(db)
+}
+
+func strPtr(s string) *string {
+	return &s
+}
+
+// SeedData injects initial mock data to the database if it is empty
+func SeedData(db *gorm.DB) {
+	var count int64
+	db.Model(&models.Gallery{}).Count(&count)
+	
+	if count == 0 {
+		log.Println("Seeding initial mock data into database...")
+		
+		hashtags := []models.Hashtag{
+			{Name: "Photography"}, {Name: "Landscape"}, {Name: "Monochrome"},
+			{Name: "Urban"}, {Name: "Brutalism"}, {Name: "Portrait"}, {Name: "Night"}, {Name: "Street"},
+		}
+		for i := range hashtags {
+			db.FirstOrCreate(&hashtags[i], models.Hashtag{Name: hashtags[i].Name})
+		}
+
+		galleries := []models.Gallery{
+			{
+				Name:  strPtr("Eternal Ridges"),
+				Image: "https://placehold.co/600x800/e2e8f0/64748b?font=inter&text=Eternal+Ridges",
+				Hashtags: []models.Hashtag{hashtags[0], hashtags[1]},
+			},
+			{
+				Name:  strPtr("Neon Solitude"),
+				Image: "https://placehold.co/600x450/e2e8f0/64748b?font=inter&text=Neon+Solitude",
+				Hashtags: []models.Hashtag{hashtags[7], hashtags[6]},
+			},
+			{
+				Name:  strPtr("Path of Spans"),
+				Image: "https://placehold.co/600x1000/e2e8f0/64748b?font=inter&text=Path+of+Spans",
+				Hashtags: []models.Hashtag{hashtags[1]},
+			},
+			{
+				Name:  strPtr("Concrete Rhythm"),
+				Image: "https://placehold.co/600x500/e2e8f0/64748b?font=inter&text=Concrete+Rhythm",
+				Hashtags: []models.Hashtag{hashtags[4], hashtags[3]},
+			},
+			{
+				Name:  strPtr("Silent Monochrome"),
+				Image: "https://placehold.co/600x700/e2e8f0/64748b?font=inter&text=Silent+Monochrome",
+				Hashtags: []models.Hashtag{hashtags[2], hashtags[5]},
+			},
+		}
+
+		for _, gallery := range galleries {
+			db.Create(&gallery)
+		}
+		
+		log.Println("Database seeded successfully")
+	} else {
+		log.Println("Database already has data, skipping seeding")
+	}
 }
 
 func getEnv(key, fallback string) string {

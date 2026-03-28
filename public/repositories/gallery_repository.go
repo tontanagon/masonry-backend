@@ -15,10 +15,20 @@ func NewGalleryRepository(db *gorm.DB) *GalleryRepository {
 	return &GalleryRepository{DB: db}
 }
 
-// FindAll returns all galleries with their hashtags
-func (r *GalleryRepository) FindAll() ([]models.Gallery, error) {
+// FindAll returns all galleries with their hashtags, optionally filtered by tags and paginated
+func (r *GalleryRepository) FindAll(tags []string, page int, limit int) ([]models.Gallery, error) {
 	var galleries []models.Gallery
-	err := r.DB.Preload("Hashtags").Order("created_at DESC").Find(&galleries).Error
+	query := r.DB.Preload("Hashtags").Order("created_at DESC")
+
+	if len(tags) > 0 {
+		query = query.Joins("JOIN gallery_hashtags ON gallery_hashtags.gallery_id = galleries.id").
+			Joins("JOIN hashtags ON hashtags.id = gallery_hashtags.hashtag_id").
+			Where("hashtags.name IN ?", tags).
+			Group("galleries.id")
+	}
+
+	offset := (page - 1) * limit
+	err := query.Offset(offset).Limit(limit).Find(&galleries).Error
 	return galleries, err
 }
 
